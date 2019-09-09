@@ -28,19 +28,35 @@ var serveCmd = &cobra.Command{
 	Short: "Start serving the broker api",
 	Run: func(cmd *cobra.Command, args []string) {
 		http.HandleFunc("/", ApiRoot)
-		listenAddress := fmt.Sprint(viper.GetString("listen-ip"), ":", viper.GetInt("listen-port"))
-		err := http.ListenAndServe(listenAddress, nil)
-		if err != nil {
-			log.Fatal(err.Error())
+		if viper.GetBool("tls") {
+			listenAddress := fmt.Sprint(viper.GetString("listen-ip"), ":", viper.GetInt("listen-tls-port"))
+			err := http.ListenAndServeTLS(listenAddress, viper.GetString("tls-cert"), viper.GetString("tls-key"), nil)
+			if err != nil {
+				log.Fatal(err.Error())
+			}
+		} else {
+			listenAddress := fmt.Sprint(viper.GetString("listen-ip"), ":", viper.GetInt("listen-port"))
+			err := http.ListenAndServe(listenAddress, nil)
+			if err != nil {
+				log.Fatal(err.Error())
+			}
 		}
 	},
 }
 
 func init() {
 	serveCmd.Flags().StringP("listen-ip", "", "", "API server listen ip")
-	serveCmd.Flags().IntP("listen-port", "", 8080, "API server listen port ")
+	serveCmd.Flags().IntP("listen-port", "", 8080, "API server listen port")
+	serveCmd.Flags().IntP("listen-tls-port", "", 8443, "API server tls listen port")
+	serveCmd.Flags().StringP("tls-cert", "", "server.crt", "TLS certificate file")
+	serveCmd.Flags().StringP("tls-key", "", "server.key", "TLS private key")
+	serveCmd.Flags().BoolP("tls", "", false, "Enable TLS")
 	viper.BindPFlag("listen-ip", serveCmd.Flags().Lookup("listen-ip"))
 	viper.BindPFlag("listen-port", serveCmd.Flags().Lookup("listen-port"))
+	viper.BindPFlag("listen-tls-port", serveCmd.Flags().Lookup("listen-tls-port"))
+	viper.BindPFlag("tls-cert", serveCmd.Flags().Lookup("tls-cert"))
+	viper.BindPFlag("tls-key", serveCmd.Flags().Lookup("tls-key"))
+	viper.BindPFlag("tls", serveCmd.Flags().Lookup("tls"))
 
 	rootCmd.AddCommand(serveCmd)
 }
