@@ -28,19 +28,23 @@ var serveCmd = &cobra.Command{
 	Short: "Start serving the broker api",
 	Run: func(cmd *cobra.Command, args []string) {
 		http.HandleFunc("/", ApiRoot)
+		var listenAddress string
 		if viper.GetBool("tls") {
-			listenAddress := fmt.Sprint(viper.GetString("listen-ip"), ":", viper.GetInt("listen-tls-port"))
+			log.Info("Creating TLS listener")
+			listenAddress = fmt.Sprint(viper.GetString("listen-ip"), ":", viper.GetInt("listen-tls-port"))
 			err := http.ListenAndServeTLS(listenAddress, viper.GetString("tls-cert"), viper.GetString("tls-key"), nil)
 			if err != nil {
 				log.Fatal(err.Error())
 			}
 		} else {
-			listenAddress := fmt.Sprint(viper.GetString("listen-ip"), ":", viper.GetInt("listen-port"))
+			log.Info("Creating plain http listener")
+			listenAddress = fmt.Sprint(viper.GetString("listen-ip"), ":", viper.GetInt("listen-port"))
 			err := http.ListenAndServe(listenAddress, nil)
 			if err != nil {
 				log.Fatal(err.Error())
 			}
 		}
+		log.Info(fmt.Sprint("Listening on ", listenAddress))
 	},
 }
 
