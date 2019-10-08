@@ -1,0 +1,47 @@
+---
+base: &base
+  source:
+    name: registry-group.mgmtbi.ch/docker_base/alpine
+    # do not build "latest" at the moment as it refers to centos8
+    # which is missing pygpgme packages as well as a runit package
+    tags: ['latest']
+    primary: 'latest'
+  variables:
+    maintainer: 'Betriebssysteme & Cloud <syx.bbz@bedag.ch>'
+    version: '{{ git_tag | default(git_ref_slug, true) }}'
+selectors:
+  master_and_tags: &master_and_tags ['^tag-(\d+\.)+\d+$', '^branch-master$']
+  tags_only: &tags_only ['^tag-(\d+\.)+\d+$']
+
+builds:
+  # development tags/image, placed in a separate repository below the main one
+  - name: vault-secret-broker/dev
+    namespace: registry.mgmtbi.ch/bedag_dcs
+    <<: *base
+    tags:
+    - template: '{{ _source["tag"] }}.dev.{{ version }}'
+      selectors: *master_and_tags
+      negate: true
+    - template: 'latest'
+      selectors: *master_and_tags
+      negate: true
+      only_primary: true
+
+  # the main image with relative tags
+  - name: vault-secret-broker
+    namespace: registry.mgmtbi.ch/bedag_dcs
+    <<: *base
+    tags:
+    # the main relative tag, will be overwritten by every build
+    # based on the master branch or a tag
+    - template: '{{ _source["tag"] }}'
+      selectors: *master_and_tags
+
+  # "stable" image with static tags
+  - name: vault-secret-broker
+    namespace: release-registry.mgmtbi.ch/bedag_dcs
+    <<: *base
+    tags:
+    # a static version only created based on git tags
+    - template: '{{ _source["tag"] }}.static.{{ version }}'
+      selectors: *tags_only

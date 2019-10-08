@@ -1,14 +1,18 @@
 ---
+include:
+  - 'https://s3.mgmtbi.ch/gitlab-ci/dev/refactor-for-modularity/components/docker-build.yml'
+
 stages:
-  - build
+  - build:app
+  - docker-build:build
 
 cache:
   key: ${CI_COMMIT_REF_SLUG}-${CI_JOB_NAME}
   paths:
     - .cache
 
-.build: &build
-  stage: build
+.build:
+  stage: build:app
   tags:
     - build
   script:
@@ -21,18 +25,25 @@ cache:
     paths:
       - vault-secret-broker
 
-build-1.11:
-  <<: *build
+build:1.11:
+  extends: .build
   before_script:
     - apk add --no-cache git build-base
   image: registry-group.mgmtbi.ch/golang:1.11-alpine
 
-build-1.12:
-  <<: *build
+build:1.12:
+  extends: .build
   before_script:
     - apk add --no-cache git
   image: registry-group.mgmtbi.ch/golang:1.12-alpine
 
-build-1.13:
-  <<: *build
+build:1.13:
+  extends: .build
   image: registry-group.mgmtbi.ch/golang:1.13-alpine
+
+build:docker:
+  extends: .docker-build-image
+  dependencies:
+    - build:1.13
+  needs:
+    - build:1.13
