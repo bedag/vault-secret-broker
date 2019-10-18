@@ -18,16 +18,19 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/bedag/vault-secret-broker/pkg/vault"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
+var client *vault.Client
+
 var serveCmd = &cobra.Command{
 	Use:   "serve",
 	Short: "Start serving the broker api",
 	Run: func(cmd *cobra.Command, args []string) {
-		http.HandleFunc("/", ApiRoot)
+		http.HandleFunc("/", APIRoot)
 		var listenAddress string
 		if viper.GetBool("tls") {
 			log.Info("Creating TLS listener")
@@ -44,7 +47,9 @@ var serveCmd = &cobra.Command{
 				log.Fatal(err.Error())
 			}
 		}
+
 		log.Info(fmt.Sprint("Listening on ", listenAddress))
+
 	},
 }
 
@@ -62,10 +67,19 @@ func init() {
 	viper.BindPFlag("tls-key", serveCmd.Flags().Lookup("tls-key"))
 	viper.BindPFlag("tls", serveCmd.Flags().Lookup("tls"))
 
+	var err error
+	client, err = vault.NewClient()
+	if err != nil {
+		log.Fatal(fmt.Sprintf("Failed to initialize Vault client: %s", err.Error()))
+	}
+
 	rootCmd.AddCommand(serveCmd)
 }
 
-func ApiRoot(w http.ResponseWriter, r *http.Request) {
+// APIRoot is the request handler for requests to "/"
+// Currently only returns the app name and the version
+func APIRoot(w http.ResponseWriter, r *http.Request) {
 	versionString := fmt.Sprint(appName, " ", version)
 	fmt.Fprintf(w, versionString)
+	_ = client.RawClient()
 }

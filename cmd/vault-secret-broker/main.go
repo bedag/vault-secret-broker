@@ -48,16 +48,36 @@ running jobs.`,
 }
 
 func init() {
-	viper.SetEnvPrefix(appName)
+	// use a short EnvPrefix as appName would be unpractically long
+	viper.SetEnvPrefix("vsb")
 	dashReplacer := strings.NewReplacer("-", "_", ".", "_")
 	viper.SetEnvKeyReplacer(dashReplacer)
 	viper.AutomaticEnv()
 
+	userHome := os.Getenv("HOME")
+	defaultVaultApproleSecretIDStorePath := userHome + "/.vault-secret-broker-secretid"
+	defaultVaultApproleRoleIDPath := userHome + "/.vault-secret-broker-roleid"
+
 	rootCmd.PersistentFlags().StringP("log-level", "", log.WarnLevel.String(), "log level (trace,debug,info,warn/warning,error,fatal,panic)")
 	rootCmd.PersistentFlags().BoolP("json-log", "", false, "log as json")
 
+	rootCmd.PersistentFlags().StringP("vault-role", "", "default", "Vault role (default)")
+	rootCmd.PersistentFlags().StringP("vault-auth-path", "", "approle", "Vault auth-path, e.g. /vi/auth/<vault-auth-path>/ (approle)")
+	rootCmd.PersistentFlags().StringP("vault-approle-role-id", "", "", "Vault AppRole RoleID")
+	rootCmd.PersistentFlags().StringP("vault-approle-roleid-path", "", defaultVaultApproleRoleIDPath, "Vault AppRole RoleID path ("+defaultVaultApproleRoleIDPath+")")
+	rootCmd.PersistentFlags().StringP("vault-approle-initial-secretid", "", "", "Initial Vault AppRole SecretID")
+	rootCmd.PersistentFlags().StringP("vault-approle-initial-secretid-path", "", defaultVaultApproleSecretIDStorePath, "Initial Vault AppRole SecretID path ("+defaultVaultApproleSecretIDStorePath+")")
+	rootCmd.PersistentFlags().StringP("vault-approle-secretid-store-path", "", defaultVaultApproleSecretIDStorePath, "Vault AppRole SecretID storage path ("+defaultVaultApproleSecretIDStorePath+")")
+
 	viper.BindPFlag("log-level", rootCmd.PersistentFlags().Lookup("log-level"))
 	viper.BindPFlag("json-log", rootCmd.PersistentFlags().Lookup("json-log"))
+	viper.BindPFlag("vault-role", rootCmd.PersistentFlags().Lookup("vault-role"))
+	viper.BindPFlag("vault-auth-path", rootCmd.PersistentFlags().Lookup("vault-auth-path"))
+	viper.BindPFlag("vault-approle-roleid", rootCmd.PersistentFlags().Lookup("vault-approle-roleid"))
+	viper.BindPFlag("vault-approle-roleid-path", rootCmd.PersistentFlags().Lookup("vault-approle-roleid-path"))
+	viper.BindPFlag("vault-approle-initial-secretid", rootCmd.PersistentFlags().Lookup("vault-approle-intitial-secretid"))
+	viper.BindPFlag("vault-approle-initial-secretid-path", rootCmd.PersistentFlags().Lookup("vault-approle-initial-secretid-path"))
+	viper.BindPFlag("vault-approle-secretid-store-path", rootCmd.PersistentFlags().Lookup("vault-approle-secretid-store-path"))
 }
 
 func execute() {
