@@ -115,21 +115,21 @@ func NewApproleWithOptions(opts ...ApproleOption) (*Approle, error) {
 
 	// get the paths for retrieving the RoleID and the initial SecretID from files
 	if o.roleIDPath == "" {
-		o.roleIDPath = viper.GetString("vault-approle-roleid-path")
+		o.roleIDPath = viper.GetString("vault-approle-role-id-path")
 	}
 
 	if o.initialSecretIDPath == "" {
-		o.initialSecretIDPath = viper.GetString("vault-approle-initial-secretid-path")
+		o.initialSecretIDPath = viper.GetString("vault-approle-initial-secret-id-path")
 	}
 
 	if o.secretIDStorePath == "" {
-		o.secretIDStorePath = viper.GetString("vault-approle-secretid-store-path")
+		o.secretIDStorePath = viper.GetString("vault-approle-secret-id-store-path")
 	}
 
 	// Get the RoleID ...
 	// ... from cli parameters or the environment
 	if o.roleID == "" {
-		o.roleID = viper.GetString("vault-approle-roleid")
+		o.roleID = viper.GetString("vault-approle-role-id")
 	}
 
 	// ... from the RoleID path
@@ -157,7 +157,7 @@ func NewApproleWithOptions(opts ...ApproleOption) (*Approle, error) {
 
 	// ... from the cli or the environment
 	if o.initialSecretID == "" {
-		o.initialSecretID = viper.GetString("vault-approle-initial-secretid")
+		o.initialSecretID = viper.GetString("vault-approle-initial-secret-id")
 	}
 
 	// ... from the initial SecretID path
