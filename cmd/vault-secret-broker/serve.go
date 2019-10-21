@@ -15,6 +15,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -30,7 +31,17 @@ var serveCmd = &cobra.Command{
 	Use:   "serve",
 	Short: "Start serving the broker api",
 	Run: func(cmd *cobra.Command, args []string) {
+		// initialize vault connection
+		var err error
+		client, err = vault.NewClient()
+		if err != nil {
+			log.Fatal(fmt.Sprintf("Failed to initialize Vault client: %s", err.Error()))
+		}
+
+		// define api routes
 		http.HandleFunc("/", APIRoot)
+
+		// create http(s) listener
 		var listenAddress string
 		if viper.GetBool("tls") {
 			log.Info("Creating TLS listener")
@@ -67,12 +78,6 @@ func init() {
 	viper.BindPFlag("tls-key", serveCmd.Flags().Lookup("tls-key"))
 	viper.BindPFlag("tls", serveCmd.Flags().Lookup("tls"))
 
-	var err error
-	client, err = vault.NewClient()
-	if err != nil {
-		log.Fatal(fmt.Sprintf("Failed to initialize Vault client: %s", err.Error()))
-	}
-
 	rootCmd.AddCommand(serveCmd)
 }
 
@@ -81,5 +86,15 @@ func init() {
 func APIRoot(w http.ResponseWriter, r *http.Request) {
 	versionString := fmt.Sprint(appName, " ", version)
 	fmt.Fprintf(w, versionString)
-	_ = client.RawClient()
+	logical := client.RawClient().Logical()
+
+	// get and print the data of the lease used
+	// to authenticate to vault
+	self, err := logical.Read("auth/token/lookup-self")
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("500 - Something bad happened!"))
+	}
+	selfData, err := json.Marshal(self.Data)
+	fmt.Fprintf(w, string(selfData))
 }
