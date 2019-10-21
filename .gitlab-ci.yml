@@ -1,6 +1,6 @@
 ---
 include:
-  - 'https://s3.mgmtbi.ch/gitlab-ci/dev/refactor-for-modularity/components/docker-build.yml'
+  - 'https://s3.mgmtbi.ch/gitlab-ci/master/components/docker-build.yml'
 
 stages:
   - build:app
