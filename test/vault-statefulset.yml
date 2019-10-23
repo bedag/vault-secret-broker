@@ -71,14 +71,13 @@ spec:
             add:
             - IPC_LOCK
       - args:
-        - --pre-flight-checks
-        - "true"
         - --mode
         - file
+        - --vault-config-file
+        - /config/vault-config.yml
         command:
         - bank-vaults
-        - unseal
-        - --init
+        - configure
         env:
         - name: VAULT_ADDR
           value: http://127.0.0.1:8200
@@ -94,6 +93,14 @@ spec:
           requests:
             cpu: 100m
             memory: 64Mi
+        volumeMounts:
+        - mountPath: /config
+          name: vault-config
       restartPolicy: Always
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: (( concat "vault-" $VSP_DEV_ID || "dev" ))
+        name: vault-config
   updateStrategy:
     type: RollingUpdate
