@@ -1,0 +1,99 @@
+apiVersion: apps/v1
+kind: "StatefulSet"
+metadata:
+  name: (( concat "vault-" $VSP_DEV_ID || "dev" ))
+  labels:
+    dev-id: (( grab $VSP_DEV_ID || "dev" ))
+spec:
+  replicas: 1
+  revisionHistoryLimit: 1
+  selector:
+    matchLabels:
+      app: secret-broker-test
+      component: vault
+      dev-id: (( grab $VSP_DEV_ID || "dev" ))
+  serviceName: ""
+  template:
+    metadata:
+      labels:
+        app: secret-broker-test
+        component: vault
+        dev-id: (( grab $VSP_DEV_ID || "dev" ))
+    spec:
+      affinity: {}
+      containers:
+      - args:
+        - server
+        - -dev
+        env:
+        - name: VAULT_CLUSTER_INTERFACE
+          value: eth0
+        - name: VAULT_DEV_ROOT_TOKEN_ID
+          value: (( grab $VSP_DEV_TOKEN || "123456789" ))
+        - name: VAULT_DEV_LISTEN_ADDRESS
+          value: 0.0.0.0:8200
+        - name: VAULT_ADDR
+          value: http://127.0.0.1:8200
+        image: (( concat $VSP_DEV_REGISTRY || "" "vault:1.2.3" ))
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /v1/sys/init
+            port: api-port
+            scheme: HTTP
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        name: vault
+        ports:
+        - containerPort: 8200
+          name: api-port
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 2
+          httpGet:
+            path: /v1/sys/health?standbyok&perfstandbyok
+            port: api-port
+            scheme: HTTP
+          periodSeconds: 5
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources:
+          limits:
+            cpu: "1"
+            memory: 512Mi
+          requests:
+            cpu: 250m
+            memory: 256Mi
+        securityContext:
+          capabilities:
+            add:
+            - IPC_LOCK
+      - args:
+        - --pre-flight-checks
+        - "true"
+        - --mode
+        - file
+        command:
+        - bank-vaults
+        - unseal
+        - --init
+        env:
+        - name: VAULT_ADDR
+          value: http://127.0.0.1:8200
+        - name: VAULT_TOKEN
+          value: (( grab $VSP_DEV_TOKEN || "123456789" ))
+        image: (( concat $VSP_DEV_REGISTRY || "" "banzaicloud/bank-vaults:0.5.3" ))
+        imagePullPolicy: IfNotPresent
+        name: bank-vaults
+        resources:
+          limits:
+            cpu: 200m
+            memory: 128Mi
+          requests:
+            cpu: 100m
+            memory: 64Mi
+      restartPolicy: Always
+  updateStrategy:
+    type: RollingUpdate
