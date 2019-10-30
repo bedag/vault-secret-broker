@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: (( concat "vault-" $VSP_DEV_ID || "dev" ))
+  name: (( concat "vault-" $VSB_DEV_ID || "dev" ))
   labels:
-    dev-id: (( grab $VSP_DEV_ID || "dev" ))
+    dev-id: (( grab $VSB_DEV_ID || "dev" ))
 spec:
   ports:
   - name: api-port
@@ -13,6 +13,6 @@ spec:
   selector:
     app: secret-broker-test
     component: vault
-    dev-id: (( grab $VSP_DEV_ID || "dev" ))
+    dev-id: (( grab $VSB_DEV_ID || "dev" ))
   sessionAffinity: None
   type: ClusterIP

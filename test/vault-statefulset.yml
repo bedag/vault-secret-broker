@@ -1,9 +1,9 @@
 apiVersion: apps/v1
 kind: "StatefulSet"
 metadata:
-  name: (( concat "vault-" $VSP_DEV_ID || "dev" ))
+  name: (( concat "vault-" $VSB_DEV_ID || "dev" ))
   labels:
-    dev-id: (( grab $VSP_DEV_ID || "dev" ))
+    dev-id: (( grab $VSB_DEV_ID || "dev" ))
 spec:
   replicas: 1
   revisionHistoryLimit: 1
@@ -11,14 +11,14 @@ spec:
     matchLabels:
       app: secret-broker-test
       component: vault
-      dev-id: (( grab $VSP_DEV_ID || "dev" ))
+      dev-id: (( grab $VSB_DEV_ID || "dev" ))
   serviceName: ""
   template:
     metadata:
       labels:
         app: secret-broker-test
         component: vault
-        dev-id: (( grab $VSP_DEV_ID || "dev" ))
+        dev-id: (( grab $VSB_DEV_ID || "dev" ))
     spec:
       affinity: {}
       containers:
@@ -29,12 +29,12 @@ spec:
         - name: VAULT_CLUSTER_INTERFACE
           value: eth0
         - name: VAULT_DEV_ROOT_TOKEN_ID
-          value: (( grab $VSP_DEV_TOKEN || "123456789" ))
+          value: (( grab $VSB_DEV_TOKEN || "123456789" ))
         - name: VAULT_DEV_LISTEN_ADDRESS
           value: 0.0.0.0:8200
         - name: VAULT_ADDR
           value: http://127.0.0.1:8200
-        image: (( concat $VSP_DEV_REGISTRY || "" "vault:1.2.3" ))
+        image: (( concat $VSB_DEV_REGISTRY || "" "vault:1.2.3" ))
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 3
@@ -82,8 +82,8 @@ spec:
         - name: VAULT_ADDR
           value: http://127.0.0.1:8200
         - name: VAULT_TOKEN
-          value: (( grab $VSP_DEV_TOKEN || "123456789" ))
-        image: (( concat $VSP_DEV_REGISTRY || "" "banzaicloud/bank-vaults:0.5.3" ))
+          value: (( grab $VSB_DEV_TOKEN || "123456789" ))
+        image: (( concat $VSB_DEV_REGISTRY || "" "banzaicloud/bank-vaults:0.5.3" ))
         imagePullPolicy: IfNotPresent
         name: bank-vaults
         resources:
@@ -100,7 +100,7 @@ spec:
       volumes:
       - configMap:
           defaultMode: 420
-          name: (( concat "vault-" $VSP_DEV_ID || "dev" ))
+          name: (( concat "vault-" $VSB_DEV_ID || "dev" ))
         name: vault-config
   updateStrategy:
     type: RollingUpdate

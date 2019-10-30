@@ -1,8 +1,8 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: (( concat "vault-" $VSP_DEV_ID || "dev" ))
+  name: (( concat "vault-" $VSB_DEV_ID || "dev" ))
   labels:
-    dev-id: (( grab $VSP_DEV_ID || "dev" ))
+    dev-id: (( grab $VSB_DEV_ID || "dev" ))
 data:
   vault-config.yml: (( file "vault-config.yml" ))
