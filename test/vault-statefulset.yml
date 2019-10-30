@@ -72,7 +72,7 @@ spec:
             - IPC_LOCK
       - args:
         - --mode
-        - file
+        - dev
         - --vault-config-file
         - /config/vault-config.yml
         command:

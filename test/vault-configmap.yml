@@ -5,4 +5,4 @@ metadata:
   labels:
     dev-id: (( grab $VSP_DEV_ID || "dev" ))
 data:
-  vault-config.yml: (( file vault-config.yml ))
+  vault-config.yml: (( file "vault-config.yml" ))

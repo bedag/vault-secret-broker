@@ -15,3 +15,5 @@ echo "---"
 spruce merge vault-statefulset.yml
 echo "---"
 spruce merge vault-service.yml
+echo "---"
+spruce merge vault-configmap.yml
