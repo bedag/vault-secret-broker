@@ -1,17 +1,26 @@
 ---
-include:
-  - 'https://s3.mgmtbi.ch/gitlab-ci/master/components/docker-build.yml'
-
 stages:
   - build:app
-  - docker-build:build
+  - build:docker
 
-cache:
-  key: ${CI_COMMIT_REF_SLUG}-${CI_JOB_NAME}
-  paths:
-    - .cache
+.docker-base:
+  stage: build:docker
+  image: registry-group.mgmtbi.ch/fedora:31
+  tags:
+    - build
+    - privileged
+    - overlay
+  before_script:
+    - mkdir ~/.docker
+    - echo "$DOCKER_AUTH_CONFIG" >  ~/.docker/config.json
+    - dnf -y install buildah fuse-overlayfs --exclude container-selinux
+    - PROXY="--build-arg http_proxy=${http_proxy} --build-arg https_proxy=${https_proxy} --build-arg no_proxy=${no_proxy}"
+    - export _BUILDAH_STARTED_IN_USERNS=""
+    - export BUILDAH_ISOLATION=chroot
+    - buildah bud -f Dockerfile -t vault-secret-broker ${PROXY} .
 
-.build:
+build:app:
+  image: registry-group.mgmtbi.ch/golang:1.13-alpine
   stage: build:app
   tags:
     - build
@@ -24,26 +33,25 @@ cache:
     expire_in: 24 h
     paths:
       - vault-secret-broker
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}
+    paths:
+      - .cache
 
-build:1.11:
-  extends: .build
-  before_script:
-    - apk add --no-cache git build-base
-  image: registry-group.mgmtbi.ch/golang:1.11-alpine
+build:docker:dev:
+  extends: .docker-base
+  script:
+    - buildah push localhost/vault-secret-broker docker://registry.mgmtbi.ch/bedag_dcs/dev/vault-secret-broker:${CI_COMMIT_REF_SLUG}
+  only:
+    - branches
+  except:
+    - master
 
-build:1.12:
-  extends: .build
-  before_script:
-    - apk add --no-cache git
-  image: registry-group.mgmtbi.ch/golang:1.12-alpine
-
-build:1.13:
-  extends: .build
-  image: registry-group.mgmtbi.ch/golang:1.13-alpine
-
-build:docker:
-  extends: .docker-build-image
-  dependencies:
-    - build:1.13
-  needs:
-    - build:1.13
+build:docker:master:
+  extends: .docker-base
+  script:
+    - buildah push localhost/vault-secret-broker docker://registry.mgmtbi.ch/bedag_dcs/vault-secret-broker:latest
+  only:
+    - master
+  except:
+    - tags
