@@ -12,7 +12,7 @@
 *.out
 
 # env variables for the dev environment
-test/env
+dev/env
 
 # the actual binary
 vault-secret-broker
