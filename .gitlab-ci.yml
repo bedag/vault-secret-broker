@@ -5,19 +5,14 @@ stages:
 
 .docker-base:
   stage: build:docker
-  image: registry-group.mgmtbi.ch/fedora:31
+  image:
+    name: registry-group.mgmtbi.ch/kaniko-project/executor:debug
+    entrypoint: [""]
   tags:
     - build
-    - privileged
-    - overlay
   before_script:
-    - mkdir ~/.docker
-    - echo "$DOCKER_AUTH_CONFIG" >  ~/.docker/config.json
-    - dnf -y install buildah fuse-overlayfs --exclude container-selinux
+    - echo "$DOCKER_AUTH_CONFIG" > /kaniko/.docker/config.json
     - PROXY="--build-arg http_proxy=${http_proxy} --build-arg https_proxy=${https_proxy} --build-arg no_proxy=${no_proxy}"
-    - export _BUILDAH_STARTED_IN_USERNS=""
-    - export BUILDAH_ISOLATION=chroot
-    - buildah bud -f Dockerfile -t vault-secret-broker ${PROXY} .
 
 build:app:
   image: registry-group.mgmtbi.ch/golang:1.13-alpine
@@ -41,7 +36,7 @@ build:app:
 build:docker:dev:
   extends: .docker-base
   script:
-    - buildah push localhost/vault-secret-broker docker://registry.mgmtbi.ch/bedag_dcs/dev/vault-secret-broker:${CI_COMMIT_REF_SLUG}
+    - /kaniko/executor --context="$CI_PROJECT_DIR" --dockerfile="$CI_PROJECT_DIR/Dockerfile" --destination="registry.mgmtbi.ch/bedag_dcs/vault-secret-broker/dev:${CI_COMMIT_REF_SLUG}" --reproducible --single-snapshot ${PROXY}
   only:
     - branches
   except:
@@ -50,7 +45,7 @@ build:docker:dev:
 build:docker:master:
   extends: .docker-base
   script:
-    - buildah push localhost/vault-secret-broker docker://registry.mgmtbi.ch/bedag_dcs/vault-secret-broker:latest
+    - /kaniko/executor --context="$CI_PROJECT_DIR" --dockerfile="$CI_PROJECT_DIR/Dockerfile" --destination="registry.mgmtbi.ch/bedag_dcs/vault-secret-broker:latest" --reproducible --single-snapshot ${PROXY}
   only:
     - master
   except:
