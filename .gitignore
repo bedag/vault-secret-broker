@@ -16,3 +16,7 @@ dev/env
 
 # the actual binary
 vault-secret-broker
+# Used during the multi stage docker build job
+# as a build context.
+# See .dockerignore and https://github.com/GoogleContainerTools/kaniko/issues/595
+build/

@@ -1,6 +1,5 @@
 ---
 stages:
-  - build:app
   - build:docker
 
 .docker-base:
@@ -13,30 +12,13 @@ stages:
   before_script:
     - echo "$DOCKER_AUTH_CONFIG" > /kaniko/.docker/config.json
     - PROXY="--build-arg http_proxy=${http_proxy} --build-arg https_proxy=${https_proxy} --build-arg no_proxy=${no_proxy}"
-
-build:app:
-  image: registry-group.mgmtbi.ch/golang:1.13-alpine
-  stage: build:app
-  tags:
-    - build
-  script:
-    - mkdir -p .cache
-    - export GOPATH="$CI_PROJECT_DIR/.cache"
-    - go mod download
-    - go build ./cmd/vault-secret-broker
-  artifacts:
-    expire_in: 24 h
-    paths:
-      - vault-secret-broker
-  cache:
-    key: ${CI_COMMIT_REF_SLUG}
-    paths:
-      - .cache
+    - REGISTRY="--build-arg DOCKER_REGISTRY=registry-group.mgmtbi.ch/"
+    - GO_VERSION="--build-arg GO_VERSION=1.13"
 
 build:docker:dev:
   extends: .docker-base
   script:
-    - /kaniko/executor --context="$CI_PROJECT_DIR" --dockerfile="$CI_PROJECT_DIR/Dockerfile" --destination="registry.mgmtbi.ch/bedag_dcs/vault-secret-broker/dev:${CI_COMMIT_REF_SLUG}" --reproducible --single-snapshot ${PROXY}
+    - /kaniko/executor --context="$CI_PROJECT_DIR" --dockerfile="$CI_PROJECT_DIR/Dockerfile" --destination="${DOCKER_REGISTRY}/bedag_dcs/vault-secret-broker/dev:${CI_COMMIT_REF_SLUG}" --reproducible --single-snapshot ${PROXY} ${REGISTRY} ${GO_VERSION}
   only:
     - branches
   except:
@@ -45,7 +27,7 @@ build:docker:dev:
 build:docker:master:
   extends: .docker-base
   script:
-    - /kaniko/executor --context="$CI_PROJECT_DIR" --dockerfile="$CI_PROJECT_DIR/Dockerfile" --destination="registry.mgmtbi.ch/bedag_dcs/vault-secret-broker:latest" --reproducible --single-snapshot ${PROXY}
+    - /kaniko/executor --context="$CI_PROJECT_DIR" --dockerfile="$CI_PROJECT_DIR/Dockerfile" --destination="${DOCKER_REGISTRY}/bedag_dcs/vault-secret-broker:latest" --reproducible --single-snapshot ${PROXY} ${REGISTRY} ${GO_VERSION}
   only:
     - master
   except:

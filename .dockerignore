@@ -1,2 +1,8 @@
 *
+!cmd
+!pkg
+!go.mod
+!go.sum
 !vault-secret-broker
+# see https://github.com/GoogleContainerTools/kaniko/issues/595
+!build/
